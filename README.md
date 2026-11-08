@@ -1,157 +1,218 @@
 # OrangeHRM Playwright + TypeScript Test Automation Framework
 
-A production-ready test automation framework using **Playwright** with **TypeScript** and the **Page Object Model (POM)** design pattern, built for the OrangeHRM open-source demo application.
+A web test automation framework built using **Playwright**, **TypeScript**, and the **Page Object Model (POM)** design pattern for the OrangeHRM demo application.
 
----
+## Features & Architecture
 
-## 🚀 Features & Architecture
+- **Page Object Model (POM):** Separates test logic from page actions and locators.
+- **Centralized Test Data:** Test data and expected values are maintained in dedicated test data files.
+- **Reusable Page Classes:** Login, Dashboard, Admin User Management, and My Info page classes.
+- **Organized Test Suites:** Test scenarios are grouped by module and functional area.
+- **HTML Reporting:** Playwright HTML reports for test execution results.
+- **Execution Evidence:** Screenshots, videos, and traces configured for test execution.
+- **Sequential Execution:** Configured to run with one worker and zero retries.
 
-- **Page Object Model (POM)**: Complete separation of test logic from page actions and element locators.
-- **Centralized Data & Locators**:
-  - `testData/testData.ts`: Holds application URLs, valid/invalid credentials, and expected assertion strings.
-  - `loctestData`: Holds CSS/attribute selectors. No locators or test data are hardcoded in page classes or test specs.
-- **Full Traceability & Reporting**:
-  - Playwright HTML reporter configured with `open: 'never'` for CI/CD compatibility.
-  - Isolated HTML reports generated per test case using `cross-env PLAYWRIGHT_HTML_OUTPUT_DIR`.
-  - Artifact evidence generation: `screenshot: 'on'`, `video: 'on'`, and `trace: 'on'`.
-  - Zero retries (`retries: 0`) for deterministic test verification.
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```text
 playwright_project_02/
 ├── testData/
-│   └── testData.ts             # Centralized test data (testData, adminTestData) and locators (loctestData, locAdminUserData)
+│   ├── testData.ts
+│   ├── dashboardTestData.ts
+│   ├── myInfoTestData.ts
+│   ├── sample-avatar.png
+│   ├── sample-doc.txt
+│   └── invalid-file.xyz
 ├── pages/
-│   ├── loginPage.ts            # LoginPage POM class
-│   └── adminUserPage.ts        # AdminUserPage POM class (User Management)
+│   ├── loginPage.ts
+│   ├── dashboardPage.ts
+│   ├── adminUserPage.ts
+│   └── myInfoPage.ts
 ├── tests/
-│   ├── login.spec.ts           # Login test suite (valid, invalid, empty credentials)
-│   └── adminUser.spec.ts       # Consolidated Admin User Management test suite (30 scenarios)
-├── reports/                    # Generated HTML reports per scenario / area
-├── package.json                # Project dependencies and npm test/report scripts
-├── playwright.config.ts        # Playwright configuration (workers: 1, trace/video/screenshot)
-├── tsconfig.json               # TypeScript compiler configuration
-└── README.md                   # Documentation and run guides
+│   ├── login.spec.ts
+│   ├── dashboard.spec.ts
+│   ├── adminUser.spec.ts
+│   └── myInfo.spec.ts
+├── playwright.config.ts
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+├── .gitignore
+└── README.md
 ```
 
----
+## Technologies Used
 
-## 🛠️ Prerequisites
+- Playwright
+- TypeScript
+- Node.js
+- npm
+- Page Object Model (POM)
 
-- **Node.js** (v18 or higher recommended)
-- **npm** (v9 or higher)
+## Prerequisites
 
----
+- Node.js (v18 or higher recommended)
+- npm (v9 or higher recommended)
 
-## 📦 Installation
+## Installation
 
-1. **Install dependencies**:
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/nusrans21-eng/OrangeHrm_playwright_Automation_project.git
+   ```
+
+2. Navigate to the project folder:
+
+   ```bash
+   cd OrangeHrm_playwright_Automation_project
+   ```
+
+3. Install dependencies:
+
    ```bash
    npm install
    ```
-   *(Note for Windows PowerShell if script execution is restricted: you can run `npm.cmd install`)*
 
-2. **Install Chromium browser binary**:
+4. Install the Chromium browser:
+
    ```bash
    npx playwright install chromium
    ```
-   *(On Windows PowerShell: `npx.cmd playwright install chromium`)*
 
----
+   On Windows PowerShell, use `npm.cmd` and `npx.cmd` if script execution is restricted.
 
-## 🧪 Test Scenarios
+## Test Coverage
 
-| Scenario | Spec File | Actions | Assertions |
-|---|---|---|---|
-| **Valid Login** | `tests/validLogin.spec.ts` | Navigates to login page, enters valid credentials (`Admin` / `admin123`), clicks Login. | URL contains `dashboard/index`; topbar header displays `Dashboard`. |
-| **Invalid Login** | `tests/invalidLogin.spec.ts` | Navigates to login page, enters wrong credentials, clicks Login. | Alert error message shows `Invalid credentials`; URL stays on `auth/login`. |
-| **Empty Login** | `tests/emptyLogin.spec.ts` | Navigates to login page, clicks Login without input. | Both username & password show `Required` (2 messages); URL stays on `auth/login`. |
+The framework contains **84 test cases across four modules**.
 
----
+| Module | Test file | Test cases |
+|---|---|---:|
+| Login | `login.spec.ts` | 3 |
+| Dashboard | `dashboard.spec.ts` | 25 |
+| Admin User Management | `adminUser.spec.ts` | 30 |
+| My Info | `myInfo.spec.ts` | 26 |
+| **Total** | | **84** |
 
-## 🏃 Running Tests
+### 1. Login Module
 
-### 1. Run All Tests Together (Default HTML Report)
+- Valid login
+- Invalid login
+- Empty username and password validation
+
+### 2. Dashboard Module
+
+- Dashboard page and widgets
+- Quick Launch navigation
+- Side menu functionality
+- Top bar and user menu
+- General navigation and responsive layout
+
+### 3. Admin User Management Module
+
+- Add users and validate form fields
+- Edit and delete users
+- User list, sorting, and pagination
+- Search and filter functionality
+
+### 4. My Info Module
+
+- Personal details
+- Contact details
+- Emergency contacts and dependents
+- Immigration records
+- Job, salary, and reporting details
+- Qualifications
+- Attachments and profile photo
+- Memberships
+- Change password
+- General navigation and validation
+
+## Running Tests
+
+### Run all tests
+
 ```bash
-npm test
+npx playwright test
 ```
 
-### 2. Run Each Test Individually with Dedicated HTML Reports
-To execute all scenarios sequentially, saving each scenario's HTML report in its own folder (`reports/valid-login`, `reports/invalid-login`, `reports/empty-login`):
+### Run individual modules
+
+**Login:**
+
 ```bash
-npm run test:each
+npm run test:valid
+npm run test:invalid
+npm run test:empty
 ```
 
-### 3. Run Specific Scenarios
-- **Valid Login only**:
-  ```bash
-  npm run test:valid
-  ```
-- **Invalid Login only**:
-  ```bash
-  npm run test:invalid
-  ```
-- **Empty Login only**:
-  ```bash
-  npm run test:empty
-  ```
-- **Admin User Management (All 30 Tests)**:
-  ```bash
-  npm run test:admin
-  ```
-- **Admin User Management (By Area)**:
-  ```bash
-  npm run test:admin:add
-  npm run test:admin:editdelete
-  npm run test:admin:list
-  npm run test:admin:search
-  ```
+**Dashboard:**
 
----
+```bash
+npm run test:dashboard
+```
 
-## 📊 Viewing HTML Reports
+**Admin User Management:**
 
-To view the generated reports in your browser:
+```bash
+npm run test:admin
+```
 
-- **Default Report**:
-  ```bash
-  npm run report
-  ```
-- **Valid Login Report**:
-  ```bash
-  npm run report:valid
-  ```
-- **Invalid Login Report**:
-  ```bash
-  npm run report:invalid
-  ```
-- **Empty Login Report**:
-  ```bash
-  npm run report:empty
-  ```
-- **Admin User Management Report**:
-  ```bash
-  npm run report:admin
-  npm run report:admin:add
-  npm run report:admin:editdelete
-  npm run report:admin:list
-  npm run report:admin:search
-  ```
+Run individual Admin areas:
 
----
+```bash
+npm run test:admin:add
+npm run test:admin:editdelete
+npm run test:admin:list
+npm run test:admin:search
+```
 
-## 📋 Coding Standards & Guidelines
+**My Info:**
 
-1. **Zero Hardcoded Selectors / Data**: All selectors must be defined in `loctestData` and imported. All expected values and input strings must be defined in `testData`.
-2. **Page Class Structure**:
-   - Takes `private page: Page` in constructor.
-   - Declares locator fields as string properties from `loctestData`.
-   - Encapsulates actions into dedicated methods: `ValidLoginAction()`, `InvalidLoginAction()`, `EmptyLoginAction()`.
-3. **Spec Structure**:
-   - Calls `await page.goto(testData.url)`.
-   - Instantiates POM: `let objLogin = new LoginPage(page)`.
-   - Executes the corresponding action.
-   - Performs clean assertions with Playwright's `expect`.
+```bash
+npm run test:myinfo
+```
+
+Run selected My Info areas:
+
+```bash
+npm run test:myinfo:personal
+npm run test:myinfo:contact
+npm run test:myinfo:password
+```
+
+On Windows PowerShell, use `npm.cmd` and `npx.cmd` instead of `npm` and `npx` when necessary.
+
+## HTML Reports
+
+After test execution, open the default Playwright report:
+
+```bash
+npx playwright show-report
+```
+
+Reports for individual modules:
+
+```bash
+npm run report:valid
+npm run report:invalid
+npm run report:empty
+npm run report:admin
+npm run report:myinfo
+```
+
+## Coding Standards
+
+1. **Page Object Model:** Page classes contain locators and reusable page actions.
+2. **Centralized Test Data:** Test data and expected values are maintained separately.
+3. **Reusable Methods:** Common actions are encapsulated in page classes.
+4. **Organized Test Cases:** Test cases are grouped using `test.describe()`.
+5. **Assertions:** Playwright's `expect` is used to verify application behavior and results.
+
+## Test Execution Result
+
+The latest completed full test execution resulted in:
+
+**84 passed**
+
+This project demonstrates functional UI automation, validation testing, navigation testing, data-driven scenarios, and reusable automation framework design using Playwright and TypeScript.

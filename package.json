@@ -5,9 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
-    "test:valid": "cross-env PLAYWRIGHT_HTML_OUTPUT_DIR=reports/valid-login playwright test tests/validLogin.spec.ts",
-    "test:invalid": "cross-env PLAYWRIGHT_HTML_OUTPUT_DIR=reports/invalid-login playwright test tests/invalidLogin.spec.ts",
-    "test:empty": "cross-env PLAYWRIGHT_HTML_OUTPUT_DIR=reports/empty-login playwright test tests/emptyLogin.spec.ts",
+    "test:valid": "cross-env PLAYWRIGHT_HTML_OUTPUT_DIR=reports/valid-login playwright test tests/login.spec.ts --grep 'valid credentials'",
+    "test:invalid": "cross-env PLAYWRIGHT_HTML_OUTPUT_DIR=reports/invalid-login playwright test tests/login.spec.ts --grep 'invalid credentials'",
+    "test:empty": "cross-env PLAYWRIGHT_HTML_OUTPUT_DIR=reports/empty-login playwright test tests/login.spec.ts --grep 'empty credentials'",
     "test:each": "npm run test:valid && npm run test:invalid && npm run test:empty",
     "test:admin": "cross-env PLAYWRIGHT_HTML_OUTPUT_DIR=reports/admin-user playwright test tests/adminUser.spec.ts",
     "test:admin:add": "cross-env PLAYWRIGHT_HTML_OUTPUT_DIR=reports/admin-add playwright test tests/adminUser.spec.ts --grep \"Add Scenarios\"",
@@ -27,7 +27,8 @@
     "report:admin:editdelete": "playwright show-report reports/admin-editdelete",
     "report:admin:list": "playwright show-report reports/admin-list",
     "report:admin:search": "playwright show-report reports/admin-search",
-    "report:myinfo": "playwright show-report reports/my-info"
+    "report:myinfo": "playwright show-report reports/my-info",
+    "test:dashboard": "cross-env PLAYWRIGHT_HTML_OUTPUT_DIR=reports/dashboard playwright test tests/dashboard.spec.ts"
   },
   "keywords": [
     "playwright",
