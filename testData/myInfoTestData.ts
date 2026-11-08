@@ -26,10 +26,10 @@ export const myInfoTestData = {
         gender: 'Male' as const,
         nationality: 'American',
         maritalStatus: 'Single',
-        dob: '1995-05-15',
+        dob: '1995-15-05',
         futureDob: '2099-01-01',
         driverLicense: 'DL-987654321',
-        licenseExpiryDate: '2032-12-31',
+        licenseExpiryDate: '2032-31-12',
         bloodType: 'O+',
         maxName30: 'A'.repeat(30),
         maxName31: 'A'.repeat(31),
@@ -102,9 +102,9 @@ export const myInfoTestData = {
             gpa: '3.9',
         },
         skill: {
-            name: 'Playwright',
+            name: 'JavaScript',
             yearsOfExperience: '3',
-            comments: 'Expert in Playwright, TypeScript, and POM architecture.',
+            comments: 'Expert in JavaScript, TypeScript, and POM architecture.',
         },
         language: {
             name: 'Spanish',
@@ -169,7 +169,7 @@ export const locMyInfoData = {
     // Navigation & Tabs
     myInfoMenuLink: 'a[href*="viewMyDetails"]',
     employeeHeaderImage: '.orangehrm-edit-employee-image, img.employee-image',
-    tabItems: '.orangehrm-tabs-item',
+    tabItems: '.orangehrm-tabs-item, [role="tablist"] a',
 
     // Personal Details Selectors
     firstNameInput: 'input[name="firstName"]',
@@ -183,8 +183,10 @@ export const locMyInfoData = {
     nationalitySelect: '.oxd-input-group:has-text("Nationality") .oxd-select-text',
     maritalStatusSelect: '.oxd-input-group:has-text("Marital Status") .oxd-select-text',
     dobInput: '.oxd-input-group:has-text("Date of Birth") input',
-    genderMaleRadio: '.oxd-input-group:has-text("Gender") label:has-text("Male")',
-    genderFemaleRadio: '.oxd-input-group:has-text("Gender") label:has-text("Female")',
+    genderMaleRadio: '.oxd-input-group:has-text("Gender") input[value="1"]',
+    genderFemaleRadio: '.oxd-input-group:has-text("Gender") input[value="2"]',
+    genderMaleLabel: '.oxd-input-group:has-text("Gender") label:has(input[value="1"])',
+    genderFemaleLabel: '.oxd-input-group:has-text("Gender") label:has(input[value="2"])',
     personalDetailsSaveBtn: '.orangehrm-edit-employee-content form button[type="submit"]',
 
     // Custom Fields (Blood Type)
@@ -211,16 +213,17 @@ export const locMyInfoData = {
     cancelButton: 'button:has-text("Cancel")',
     deleteButton: 'button:has-text("Delete")',
     tableRows: '.oxd-table-card',
-    editRowIcon: 'button i.bi-pencil-fill, button:has(.bi-pencil-fill)',
-    deleteRowIcon: 'button i.bi-trash, button:has(.bi-trash)',
-    dialogConfirmDeleteBtn: '.orangehrm-dialog-popup button:has-text("Yes, Delete")',
-    dialogCancelDeleteBtn: '.orangehrm-dialog-popup button:has-text("No, Cancel")',
+    editRowIcon: 'button:has(.bi-pencil-fill)',
+    deleteRowIcon: 'button:has(.bi-trash)',
+    dialogConfirmDeleteBtn: '.oxd-dialog-sheet button:has-text("Yes, Delete"), .oxd-button--label-danger',
+    dialogCancelDeleteBtn: '.oxd-dialog-sheet button:has-text("No, Cancel"), .oxd-dialog-close-button',
 
     // Attachments Selectors
     attachmentsHeader: 'h6:has-text("Attachments")',
     addAttachmentButton: '.orangehrm-attachment-header button:has-text("Add"), div:has(h6:has-text("Attachments")) button:has-text("Add")',
     attachmentFileInput: 'input[type="file"]',
     attachmentCommentTextarea: 'textarea[placeholder="Type comment here"], textarea',
+    attachmentSaveButton: '.orangehrm-attachment form button[type="submit"]',
 
     // Photograph Selectors
     photoFileInput: 'input[type="file"]',

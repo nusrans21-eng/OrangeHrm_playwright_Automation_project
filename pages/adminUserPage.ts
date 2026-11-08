@@ -1,4 +1,4 @@
-import { Page, Locator } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { adminTestData, locAdminUserData } from '../testData/testData';
 
 export class AdminUserPage {
@@ -18,6 +18,7 @@ export class AdminUserPage {
     readonly statusSelect: Locator;
     readonly employeeNameInput: Locator;
     readonly usernameInput: Locator;
+    
     readonly passwordInput: Locator;
     readonly confirmPasswordInput: Locator;
 
@@ -138,12 +139,49 @@ export class AdminUserPage {
      */
     async selectEmployeeName(prefix: string = 'a'): Promise<string> {
         await this.employeeNameInput.fill(prefix);
-        const option = this.page.locator('.oxd-autocomplete-dropdown [role="option"]').first();
+
+        const dropdown = this.page.locator('.oxd-autocomplete-dropdown');
+        await dropdown.waitFor({ state: 'visible', timeout: 10000 });
+
+        // OrangeHRM initially displays a placeholder option with "Searching...."
+        // followed by either real employee options or "No Records Found"
+        const option = dropdown.locator('.oxd-autocomplete-option').filter({
+            hasNotText: /Searching/i
+        }).first();
+
         await option.waitFor({ state: 'visible', timeout: 10000 });
-        const selectedText = (await option.innerText()).trim();
-        await option.click();
-        await this.page.locator('.oxd-autocomplete-dropdown').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
-        return selectedText;
+
+        const optionText = (await option.innerText()).trim();
+        if (/No Record/i.test(optionText)) {
+            throw new Error(`No employee suggestions found for prefix/name: "${prefix}"`);
+        }
+
+        const validOptions = dropdown.locator('.oxd-autocomplete-option').filter({
+            hasNotText: /Searching|No Record/i
+        });
+        const isOptionVisible = await validOptions.first().isVisible({ timeout: 5000 }).catch(() => false);
+        if (!isOptionVisible) {
+            throw new Error(`Timed out waiting for employee suggestions for prefix/name: "${prefix}"`);
+        }
+
+        // If prefix matches a specific suggestion, prefer it; otherwise select the first suggestion
+        const matchingOption = validOptions.filter({ hasText: new RegExp(prefix.trim(), 'i') }).first();
+        const optionToSelect = (await matchingOption.isVisible().catch(() => false))
+            ? matchingOption
+            : validOptions.first();
+
+        const selectedText = (await optionToSelect.innerText()).trim();
+        await optionToSelect.click();
+        await dropdown.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+
+        // Verify that the selected employee name is populated in the input
+        await expect(async () => {
+            const actualVal = (await this.employeeNameInput.inputValue()).trim();
+            expect(actualVal.length).toBeGreaterThan(0);
+            expect(actualVal.replace(/\s+/g, ' ')).toBe(selectedText.replace(/\s+/g, ' '));
+        }).toPass({ timeout: 5000 });
+
+        return (await this.employeeNameInput.inputValue()).trim();
     }
 
     /**
@@ -151,11 +189,14 @@ export class AdminUserPage {
      */
     async selectSearchEmployeeName(name: string) {
         await this.searchEmployeeInput.fill(name);
-        const option = this.page.locator('.oxd-autocomplete-dropdown [role="option"]').first();
-        if (await option.isVisible({ timeout: 5000 }).catch(() => false)) {
-            await option.click();
-            await this.page.locator('.oxd-autocomplete-dropdown').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
-        }
+        const dropdown = this.page.locator('.oxd-autocomplete-dropdown');
+        await dropdown.waitFor({ state: 'visible', timeout: 10000 });
+        const validOptions = dropdown.locator('.oxd-autocomplete-option').filter({
+            hasNotText: /Searching|No Record/i
+        });
+        await validOptions.first().waitFor({ state: 'visible', timeout: 10000 });
+        await validOptions.first().click();
+        await dropdown.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
     }
 
     /**
@@ -203,17 +244,7 @@ export class AdminUserPage {
         await this.selectRole(data.role);
         await this.selectStatus(data.status);
         
-        let emp = data.employeeName;
-        if (!emp) {
-            emp = await this.selectEmployeeName('a');
-        } else {
-            await this.employeeNameInput.fill(emp);
-            const opt = this.page.locator('.oxd-autocomplete-dropdown [role="option"]').first();
-            if (await opt.isVisible({ timeout: 5000 }).catch(() => false)) {
-                await opt.click();
-                await this.page.locator('.oxd-autocomplete-dropdown').waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
-            }
-        }
+        const emp = await this.selectEmployeeName(data.employeeName ?? 'a');
 
         await this.fillUsername(data.username);
         const pwd = data.password ?? adminTestData.defaultPassword;
@@ -244,22 +275,30 @@ export class AdminUserPage {
         if (filters.status !== undefined) {
             await this.selectSearchStatus(filters.status);
         }
-        const respPromise = this.page.waitForResponse(
-            resp => resp.url().includes('/api/v2/admin/users') && resp.status() === 200,
+        const reqPromise = this.page.waitForRequest(
+            req => req.url().includes('/api/v2/admin/users') && req.method() === 'GET',
             { timeout: 15000 }
-        ).catch(() => null);
+        );
         await this.searchButton.click();
-        await respPromise;
+        const req = await reqPromise;
+        await this.page.waitForResponse(
+            resp => resp.request() === req && resp.status() === 200,
+            { timeout: 15000 }
+        );
         await this.waitForTableToLoad();
     }
 
     async clickReset() {
-        const respPromise = this.page.waitForResponse(
-            resp => resp.url().includes('/api/v2/admin/users') && resp.status() === 200,
+        const reqPromise = this.page.waitForRequest(
+            req => req.url().includes('/api/v2/admin/users') && req.method() === 'GET',
             { timeout: 15000 }
-        ).catch(() => null);
+        );
         await this.resetButton.click();
-        await respPromise;
+        const req = await reqPromise;
+        await this.page.waitForResponse(
+            resp => resp.request() === req && resp.status() === 200,
+            { timeout: 15000 }
+        );
         await this.waitForTableToLoad();
     }
 
@@ -284,6 +323,8 @@ export class AdminUserPage {
         await row.locator('button:has(.bi-pencil-fill), .bi-pencil-fill').first().click();
         await this.page.waitForURL(/.*admin\/saveSystemUser.*/);
         await this.saveButton.waitFor({ state: 'visible' });
+        await this.waitForTableToLoad();
+        await expect(this.usernameInput).toHaveValue(username, { timeout: 10000 });
     }
 
     async clickDeleteUser(username: string) {
@@ -311,7 +352,9 @@ export class AdminUserPage {
      * Safely search and delete a user if they exist in the list (cleanup helper)
      */
     async deleteUserIfExists(username: string) {
-        await this.navigateToAdmin();
+        if (!this.page.url().includes(adminTestData.adminUrl)) {
+            await this.navigateToAdmin();
+        }
         await this.searchUser({ username });
         const row = this.getRowByUsername(username);
         if (await row.isVisible({ timeout: 3000 }).catch(() => false)) {

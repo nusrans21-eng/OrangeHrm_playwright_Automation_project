@@ -27,6 +27,8 @@ export class MyInfoPage {
     readonly dobInput: Locator;
     readonly genderMaleRadio: Locator;
     readonly genderFemaleRadio: Locator;
+    readonly genderMaleLabel: Locator;
+    readonly genderFemaleLabel: Locator;
     readonly personalDetailsSaveBtn: Locator;
 
     // Custom Fields (Blood Type)
@@ -100,6 +102,8 @@ export class MyInfoPage {
         this.dobInput = this.page.locator(locMyInfoData.dobInput);
         this.genderMaleRadio = this.page.locator(locMyInfoData.genderMaleRadio);
         this.genderFemaleRadio = this.page.locator(locMyInfoData.genderFemaleRadio);
+        this.genderMaleLabel = this.page.locator(locMyInfoData.genderMaleLabel);
+        this.genderFemaleLabel = this.page.locator(locMyInfoData.genderFemaleLabel);
         this.personalDetailsSaveBtn = this.page.locator(locMyInfoData.personalDetailsSaveBtn).first();
 
         // Custom Fields
@@ -162,6 +166,7 @@ export class MyInfoPage {
     async navigateToMyInfo() {
         await this.myInfoMenuLink.first().click();
         await this.page.waitForURL(`**/${myInfoTestData.urls.personalDetails}/**`);
+        await this.page.locator('.orangehrm-tabs, [role="tablist"]').waitFor({ state: 'visible', timeout: 15000 });
         await this.waitForSpinner();
     }
 
@@ -170,6 +175,7 @@ export class MyInfoPage {
      */
     async clickSubTab(tabName: string) {
         const tab = this.page.locator(locMyInfoData.tabItems).filter({ hasText: tabName }).first();
+        await tab.waitFor({ state: 'visible', timeout: 15000 });
         await tab.click();
         await this.waitForSpinner();
     }
@@ -186,8 +192,9 @@ export class MyInfoPage {
      */
     async selectDropdownOption(dropdownLocator: Locator, optionText: string) {
         await dropdownLocator.click();
+        const escaped = optionText.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const option = this.page.locator('.oxd-select-dropdown [role="option"], .oxd-select-dropdown div')
-            .filter({ hasText: new RegExp(`^${optionText}$`, 'i') })
+            .filter({ hasText: new RegExp(`^\\s*${escaped}\\s*$`, 'i') })
             .first();
         await option.waitFor({ state: 'visible', timeout: 5000 });
         await option.click();
@@ -200,6 +207,19 @@ export class MyInfoPage {
         await inputLocator.click();
         await this.page.keyboard.press('ControlOrMeta+A');
         await this.page.keyboard.press('Backspace');
+    }
+
+    /**
+     * Close datepicker popup if open
+     */
+    async closeDatePicker() {
+        const closeBtn = this.page.locator('.oxd-date-input-link.--close, .oxd-date-input-calendar div:text-is("Close")').first();
+        if (await closeBtn.isVisible().catch(() => false)) {
+            await closeBtn.click();
+        } else {
+            await this.page.locator('h6').first().click({ force: true }).catch(() => {});
+        }
+        await this.page.locator('.oxd-date-input-calendar').waitFor({ state: 'hidden', timeout: 2000 }).catch(() => {});
     }
 
     // ==========================================
@@ -225,9 +245,9 @@ export class MyInfoPage {
 
         if (data.gender) {
             if (data.gender === 'Male') {
-                await this.genderMaleRadio.click();
+                await this.genderMaleLabel.click();
             } else {
-                await this.genderFemaleRadio.click();
+                await this.genderFemaleLabel.click();
             }
         }
 
@@ -242,6 +262,7 @@ export class MyInfoPage {
         if (data.dob) {
             await this.clearInput(this.dobInput);
             await this.dobInput.fill(data.dob);
+            await this.page.keyboard.press('Escape');
         }
 
         if (data.driverLicense) {
@@ -252,6 +273,7 @@ export class MyInfoPage {
         if (data.expiryDate) {
             await this.clearInput(this.licenseExpiryInput);
             await this.licenseExpiryInput.fill(data.expiryDate);
+            await this.page.keyboard.press('Escape');
         }
     }
 
@@ -370,7 +392,7 @@ export class MyInfoPage {
 
     async editEmergencyContact(currentName: string, updatedRelationship: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: currentName }).first();
-        await row.locator('button:has(.bi-pencil-fill), button i.bi-pencil-fill').click();
+        await row.locator(locMyInfoData.editRowIcon).click();
         const relationshipInput = this.page.locator('.oxd-input-group:has-text("Relationship") input');
         await this.clearInput(relationshipInput);
         await relationshipInput.fill(updatedRelationship);
@@ -380,8 +402,8 @@ export class MyInfoPage {
 
     async deleteEmergencyContact(name: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: name }).first();
-        await row.locator('button:has(.bi-trash), button i.bi-trash').click();
-        await this.dialogConfirmDeleteBtn.click();
+        await row.locator(locMyInfoData.deleteRowIcon).click();
+        await this.dialogConfirmDeleteBtn.first().click();
         await this.waitForSpinner();
     }
 
@@ -403,6 +425,7 @@ export class MyInfoPage {
 
         if (data.dob) {
             await this.page.locator('.oxd-input-group:has-text("Date of Birth") input').fill(data.dob);
+            await this.page.keyboard.press('Escape');
         }
 
         await this.page.locator('form button[type="submit"]').click();
@@ -411,7 +434,7 @@ export class MyInfoPage {
 
     async editDependent(currentName: string, updatedName: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: currentName }).first();
-        await row.locator('button:has(.bi-pencil-fill), button i.bi-pencil-fill').click();
+        await row.locator(locMyInfoData.editRowIcon).click();
         const nameInput = this.page.locator('.oxd-input-group:has-text("Name") input');
         await this.clearInput(nameInput);
         await nameInput.fill(updatedName);
@@ -421,8 +444,8 @@ export class MyInfoPage {
 
     async deleteDependent(name: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: name }).first();
-        await row.locator('button:has(.bi-trash), button i.bi-trash').click();
-        await this.dialogConfirmDeleteBtn.click();
+        await row.locator(locMyInfoData.deleteRowIcon).click();
+        await this.dialogConfirmDeleteBtn.first().click();
         await this.waitForSpinner();
     }
 
@@ -449,10 +472,12 @@ export class MyInfoPage {
 
         if (data.issuedDate) {
             await this.page.locator('.oxd-input-group:has-text("Issued Date") input').fill(data.issuedDate);
+            await this.closeDatePicker();
         }
 
         if (data.expiryDate) {
             await this.page.locator('.oxd-input-group:has-text("Expiry Date") input').fill(data.expiryDate);
+            await this.closeDatePicker();
         }
 
         if (data.eligibleStatus) {
@@ -472,7 +497,7 @@ export class MyInfoPage {
 
     async editImmigrationRecord(recordNumber: string, updatedComments: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: recordNumber }).first();
-        await row.locator('button:has(.bi-pencil-fill), button i.bi-pencil-fill').click();
+        await row.locator(locMyInfoData.editRowIcon).click();
         const commentsArea = this.page.locator('.oxd-input-group:has-text("Comments") textarea');
         await this.clearInput(commentsArea);
         await commentsArea.fill(updatedComments);
@@ -482,8 +507,8 @@ export class MyInfoPage {
 
     async deleteImmigrationRecord(recordNumber: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: recordNumber }).first();
-        await row.locator('button:has(.bi-trash), button i.bi-trash').click();
-        await this.dialogConfirmDeleteBtn.click();
+        await row.locator(locMyInfoData.deleteRowIcon).click();
+        await this.dialogConfirmDeleteBtn.first().click();
         await this.waitForSpinner();
     }
 
@@ -506,10 +531,12 @@ export class MyInfoPage {
 
         if (data.fromDate) {
             await this.page.locator('.oxd-input-group:has-text("From") input').fill(data.fromDate);
+            await this.closeDatePicker();
         }
 
         if (data.toDate) {
             await this.page.locator('.oxd-input-group:has-text("To") input').fill(data.toDate);
+            await this.closeDatePicker();
         }
 
         if (data.comment) {
@@ -521,7 +548,7 @@ export class MyInfoPage {
 
     async editWorkExperience(company: string, updatedJobTitle: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: company }).first();
-        await row.locator('button:has(.bi-pencil-fill), button i.bi-pencil-fill').click();
+        await row.locator(locMyInfoData.editRowIcon).click();
         const jobTitleInput = this.page.locator('.oxd-input-group:has-text("Job Title") input');
         await this.clearInput(jobTitleInput);
         await jobTitleInput.fill(updatedJobTitle);
@@ -531,8 +558,8 @@ export class MyInfoPage {
 
     async deleteWorkExperience(company: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: company }).first();
-        await row.locator('button:has(.bi-trash), button i.bi-trash').click();
-        await this.dialogConfirmDeleteBtn.click();
+        await row.locator(locMyInfoData.deleteRowIcon).click();
+        await this.dialogConfirmDeleteBtn.first().click();
         await this.waitForSpinner();
     }
 
@@ -542,14 +569,12 @@ export class MyInfoPage {
         await section.locator('button:has-text("Add")').click();
         await fillAction();
         await this.page.locator('form button[type="submit"]').click();
-        await this.waitForSpinner();
     }
 
     async deleteQualificationItem(recordText: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: recordText }).first();
-        await row.locator('button:has(.bi-trash), button i.bi-trash').click();
-        await this.dialogConfirmDeleteBtn.click();
-        await this.waitForSpinner();
+        await row.locator(locMyInfoData.deleteRowIcon).click();
+        await this.dialogConfirmDeleteBtn.first().click();
     }
 
     // ==========================================
@@ -562,14 +587,14 @@ export class MyInfoPage {
         if (comment) {
             await this.attachmentCommentTextarea.fill(comment);
         }
-        await this.page.locator('form button[type="submit"]').click();
+        await this.page.locator(locMyInfoData.attachmentSaveButton).click();
         await this.waitForSpinner();
     }
 
     async deleteAttachment(identifier: string) {
         const row = this.page.locator('.oxd-table-card, table tr').filter({ hasText: identifier }).first();
-        await row.locator('button:has(.bi-trash), button i.bi-trash').click();
-        await this.dialogConfirmDeleteBtn.click();
+        await row.locator(locMyInfoData.deleteRowIcon).click();
+        await this.dialogConfirmDeleteBtn.first().click();
         await this.waitForSpinner();
     }
 
@@ -585,7 +610,6 @@ export class MyInfoPage {
 
     async saveProfilePhoto() {
         await this.photoSaveButton.click();
-        await this.waitForSpinner();
     }
 
     // ==========================================
@@ -619,8 +643,8 @@ export class MyInfoPage {
 
     async deleteMembership(membershipName: string) {
         const row = this.page.locator('.oxd-table-card').filter({ hasText: membershipName }).first();
-        await row.locator('button:has(.bi-trash), button i.bi-trash').click();
-        await this.dialogConfirmDeleteBtn.click();
+        await row.locator(locMyInfoData.deleteRowIcon).click();
+        await this.dialogConfirmDeleteBtn.first().click();
         await this.waitForSpinner();
     }
 

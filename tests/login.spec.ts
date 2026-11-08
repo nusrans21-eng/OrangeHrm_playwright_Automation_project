@@ -11,6 +11,7 @@ test.describe('OrangeHRM Login Tests', () => {
         let objLogin = new LoginPage(page);
         await objLogin.ValidLoginAction();
 
+        await page.waitForURL(`**/${testData.expectedDashboardUrl}`);
         await expect(page).toHaveURL(new RegExp(testData.expectedDashboardUrl));
         await expect(page.locator(loctestData.dashboardHeader)).toHaveText(testData.expectedDashboardHeader);
     });

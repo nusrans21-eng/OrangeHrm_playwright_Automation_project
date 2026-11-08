@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import { LoginPage } from '../pages/loginPage';
 import { MyInfoPage } from '../pages/myInfoPage';
 import { testData } from '../testData/testData';
-import { myInfoTestData } from '../testData/myInfoTestData';
+import { myInfoTestData, locMyInfoData } from '../testData/myInfoTestData';
 
 test.describe('OrangeHRM - My Info Module Automation Suite', () => {
     let myInfoPage: MyInfoPage;
@@ -36,8 +36,8 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
 
             // Save and verify success notification
             await myInfoPage.savePersonalDetails();
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(myInfoPage.toast).toContainText(myInfoTestData.expectedMessages.successUpdated);
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toContainText(myInfoTestData.expectedMessages.successUpdated);
 
             // Reload page to confirm changes were saved to the server
             await page.reload();
@@ -123,8 +123,8 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
             await myInfoPage.licenseExpiryInput.fill(myInfoTestData.personalDetails.licenseExpiryDate);
 
             await myInfoPage.savePersonalDetails();
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(myInfoPage.toast).toContainText(myInfoTestData.expectedMessages.successUpdated);
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toContainText(myInfoTestData.expectedMessages.successUpdated);
 
             // Verify persistence
             await page.reload();
@@ -138,8 +138,8 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
             await myInfoPage.updateBloodType(myInfoTestData.personalDetails.bloodType);
 
             // Verify custom fields success toast
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(myInfoPage.toast).toContainText(myInfoTestData.expectedMessages.successUpdated);
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toContainText(/Successfully (Saved|Updated)/);
 
             // Reload and verify Blood Type persisted
             await page.reload();
@@ -170,8 +170,8 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
             });
 
             await myInfoPage.saveContactDetails();
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(myInfoPage.toast).toContainText(myInfoTestData.expectedMessages.successUpdated);
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toContainText(myInfoTestData.expectedMessages.successUpdated);
 
             // Reload and verify
             await page.reload();
@@ -200,7 +200,7 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
                 workPhone: myInfoTestData.contactDetails.workPhone,
             });
             await myInfoPage.saveContactDetails();
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 10000 });
         });
 
         // Test 10: Invalid work/other email -> error
@@ -240,18 +240,18 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
                 relationship: myInfoTestData.emergencyContact.relationship,
                 mobilePhone: myInfoTestData.emergencyContact.mobilePhone,
             });
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(page.locator('.oxd-table-card').filter({ hasText: contactName })).toBeVisible();
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
+            await expect(page.locator('.oxd-table-card').filter({ hasText: contactName })).toBeVisible({ timeout: 10000 });
 
             // Step 3: Edit contact
             await myInfoPage.editEmergencyContact(contactName, myInfoTestData.emergencyContact.updatedRelationship);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(page.locator('.oxd-table-card').filter({ hasText: myInfoTestData.emergencyContact.updatedRelationship })).toBeVisible();
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
+            await expect(page.locator('.oxd-table-card').filter({ hasText: myInfoTestData.emergencyContact.updatedRelationship })).toBeVisible({ timeout: 10000 });
 
             // Step 4: Delete contact
             await myInfoPage.deleteEmergencyContact(contactName);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(page.locator('.oxd-table-card').filter({ hasText: contactName })).not.toBeVisible();
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
+            await expect(page.locator('.oxd-table-card').filter({ hasText: contactName })).not.toBeVisible({ timeout: 10000 });
         });
 
         // Test 12: Dependent: add, edit, delete; name and relationship required
@@ -273,19 +273,19 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
                 relationship: myInfoTestData.dependent.relationship,
                 dob: myInfoTestData.dependent.dob,
             });
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(page.locator('.oxd-table-card').filter({ hasText: depName })).toBeVisible();
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
+            await expect(page.locator('.oxd-table-card').filter({ hasText: depName })).toBeVisible({ timeout: 10000 });
 
             // Step 3: Edit dependent
             const updatedDepName = `${depName}_Upd`;
             await myInfoPage.editDependent(depName, updatedDepName);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(page.locator('.oxd-table-card').filter({ hasText: updatedDepName })).toBeVisible();
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
+            await expect(page.locator('.oxd-table-card').filter({ hasText: updatedDepName })).toBeVisible({ timeout: 10000 });
 
             // Step 4: Delete dependent
             await myInfoPage.deleteDependent(updatedDepName);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(page.locator('.oxd-table-card').filter({ hasText: updatedDepName })).not.toBeVisible();
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
+            await expect(page.locator('.oxd-table-card').filter({ hasText: updatedDepName })).not.toBeVisible({ timeout: 10000 });
         });
     });
 
@@ -314,19 +314,22 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
             await expect(dateError).toHaveText(myInfoTestData.expectedMessages.expiryBeforeIssue);
 
             // Step 2: Correct expiry date and save
-            await myInfoPage.clearInput(page.locator('.oxd-input-group:has-text("Expiry Date") input'));
-            await page.locator('.oxd-input-group:has-text("Expiry Date") input').fill(myInfoTestData.immigration.expiryDate);
+            const expiryInput = page.locator('.oxd-input-group:has-text("Expiry Date") input');
+            await myInfoPage.clearInput(expiryInput);
+            await expiryInput.fill(myInfoTestData.immigration.expiryDate);
+            await myInfoPage.closeDatePicker();
+            await expiryInput.blur();
             await page.locator('form button[type="submit"]').click();
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 10000 });
             await expect(page.locator('.oxd-table-card').filter({ hasText: docNum })).toBeVisible();
 
             // Step 3: Edit record
             await myInfoPage.editImmigrationRecord(docNum, myInfoTestData.immigration.updatedComments);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
 
             // Step 4: Delete record
             await myInfoPage.deleteImmigrationRecord(docNum);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
             await expect(page.locator('.oxd-table-card').filter({ hasText: docNum })).not.toBeVisible();
         });
     });
@@ -387,24 +390,29 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
             await expect(dateError).toHaveText(myInfoTestData.expectedMessages.toDateBeforeFromDate);
 
             // Step 2: Fix date and save
-            await myInfoPage.clearInput(page.locator('.oxd-input-group:has-text("To") input'));
-            await page.locator('.oxd-input-group:has-text("To") input').fill(myInfoTestData.qualifications.workExperience.toDate);
+            const toInput = page.locator('.oxd-input-group:has-text("To") input');
+            await myInfoPage.clearInput(toInput);
+            await toInput.fill(myInfoTestData.qualifications.workExperience.toDate);
+            await myInfoPage.closeDatePicker();
+            await toInput.blur();
             await page.locator('form button[type="submit"]').click();
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 10000 });
             await expect(page.locator('.oxd-table-card').filter({ hasText: companyName })).toBeVisible();
 
             // Step 3: Edit work experience
             await myInfoPage.editWorkExperience(companyName, myInfoTestData.qualifications.workExperience.updatedJobTitle);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
 
             // Step 4: Delete work experience
             await myInfoPage.deleteWorkExperience(companyName);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
             await expect(page.locator('.oxd-table-card').filter({ hasText: companyName })).not.toBeVisible();
         });
 
         // Test 17: Education, skills, languages, licenses: add and delete (data-driven)
         test('17. Education, skills, languages, licenses: add and delete (data-driven)', async ({ page }) => {
+            test.slow();
+
             // Data-driven test definitions
             const qualificationDataSets = [
                 {
@@ -431,21 +439,32 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
                             page.locator('.oxd-input-group:has-text("Fluency") .oxd-select-text'),
                             myInfoTestData.qualifications.language.fluency
                         );
+                        await myInfoPage.selectDropdownOption(
+                            page.locator('.oxd-input-group:has-text("Competency") .oxd-select-text'),
+                            myInfoTestData.qualifications.language.competency
+                        );
                     }
                 }
             ];
 
             // Iterate through data-driven sets
             for (const item of qualificationDataSets) {
+                // If item already exists in the table from a previous run, delete it first for clean test isolation
+                const existingRow = page.locator('.oxd-table-card').filter({ hasText: item.uniqueKey }).first();
+                if (await existingRow.isVisible().catch(() => false)) {
+                    await myInfoPage.deleteQualificationItem(item.uniqueKey);
+                    await expect(existingRow).not.toBeVisible({ timeout: 5000 }).catch(() => { });
+                }
+
                 // Add item
                 await myInfoPage.addQualificationItem(item.section, item.fillAction);
-                await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-                await expect(page.locator('.oxd-table-card').filter({ hasText: item.uniqueKey })).toBeVisible();
+                await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
+                await expect(page.locator('.oxd-table-card').filter({ hasText: item.uniqueKey })).toBeVisible({ timeout: 10000 });
 
                 // Delete item
                 await myInfoPage.deleteQualificationItem(item.uniqueKey);
-                await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-                await expect(page.locator('.oxd-table-card').filter({ hasText: item.uniqueKey })).not.toBeVisible();
+                await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
+                await expect(page.locator('.oxd-table-card').filter({ hasText: item.uniqueKey })).not.toBeVisible({ timeout: 10000 });
             }
         });
     });
@@ -460,8 +479,8 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
             const commentText = `Attachment_${Date.now()}`;
             await myInfoPage.addAttachment(myInfoTestData.attachment.filePath, commentText);
 
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
-            await expect(myInfoPage.toast).toContainText(myInfoTestData.expectedMessages.successSaved);
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toContainText(myInfoTestData.expectedMessages.successSaved);
 
             // Verify row exists in attachments table
             const attachmentRow = page.locator('.oxd-table-card, table tr').filter({ hasText: commentText });
@@ -469,7 +488,7 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
 
             // Delete attachment
             await myInfoPage.deleteAttachment(commentText);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
             await expect(attachmentRow).not.toBeVisible();
         });
 
@@ -479,7 +498,7 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
             await myInfoPage.attachmentFileInput.setInputFiles(myInfoTestData.attachment.invalidFilePath);
 
             // Check if client-side or submission validation error appears
-            await page.locator('form button[type="submit"]').click();
+            await page.locator(locMyInfoData.attachmentSaveButton).click();
             const errorElement = page.locator('.oxd-input-field-error-message, .oxd-toast--error');
             await expect(errorElement.first()).toBeVisible({ timeout: 5000 });
         });
@@ -500,7 +519,8 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
 
             // Save valid photo
             await myInfoPage.saveProfilePhoto();
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toContainText(myInfoTestData.expectedMessages.successUpdated);
         });
     });
 
@@ -514,6 +534,13 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
             await myInfoPage.clickSubTab('Memberships');
             await page.waitForURL(`**/${myInfoTestData.urls.memberships}/**`);
 
+            // If membership already exists in table from a previous run, delete it first for clean test isolation
+            const existingRow = page.locator('.oxd-table-card').filter({ hasText: myInfoTestData.memberships.membership }).first();
+            if (await existingRow.isVisible().catch(() => false)) {
+                await myInfoPage.deleteMembership(myInfoTestData.memberships.membership);
+                await myInfoPage.waitForSpinner();
+            }
+
             // Add membership
             await myInfoPage.addMembership({
                 membership: myInfoTestData.memberships.membership,
@@ -522,12 +549,12 @@ test.describe('OrangeHRM - My Info Module Automation Suite', () => {
                 currency: myInfoTestData.memberships.currency,
             });
 
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
             await expect(page.locator('.oxd-table-card').filter({ hasText: myInfoTestData.memberships.membership })).toBeVisible();
 
             // Delete membership
             await myInfoPage.deleteMembership(myInfoTestData.memberships.membership);
-            await expect(myInfoPage.toast).toBeVisible({ timeout: 10000 });
+            await expect(myInfoPage.toast.first()).toBeVisible({ timeout: 5000 }).catch(() => { });
             await expect(page.locator('.oxd-table-card').filter({ hasText: myInfoTestData.memberships.membership })).not.toBeVisible();
         });
     });

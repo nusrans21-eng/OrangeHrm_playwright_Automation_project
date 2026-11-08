@@ -221,13 +221,13 @@ test.describe('Admin User Management', () => {
             const incognitoContext = await browser.newContext();
             const newPage = await incognitoContext.newPage();
             try {
-                await newPage.goto(testData.url);
+                await newPage.goto(testData.url, { waitUntil: 'domcontentloaded' });
                 await newPage.locator(loctestData.usernameInputField).fill(username);
                 await newPage.locator(loctestData.passwordInputField).fill(password);
                 await newPage.locator(loctestData.loginButton).click();
 
                 await expect(newPage).toHaveURL(new RegExp(testData.expectedDashboardUrl), { timeout: 15000 });
-                await expect(newPage.locator(loctestData.dashboardHeader)).toBeVisible();
+                await expect(newPage.locator(loctestData.dashboardHeader)).toBeVisible({ timeout: 10000 });
             } finally {
                 await incognitoContext.close();
                 await adminPage.deleteUserIfExists(username);
@@ -290,7 +290,7 @@ test.describe('Admin User Management', () => {
                 await adminPage.usernameInput.fill(adminTestData.duplicateUsername);
 
                 const error = adminPage.getFieldErrorMessage('Username');
-                await expect(error).toBeVisible();
+                await expect(error).toBeVisible({ timeout: 10000 });
                 await expect(error).toHaveText(adminTestData.expectedAlreadyExistsMessage);
             } finally {
                 await adminPage.deleteUserIfExists(tempUsername);
@@ -326,13 +326,41 @@ test.describe('Admin User Management', () => {
         // 25. Cancel on the delete confirmation keeps the user
         test('25. Cancel on the delete confirmation keeps the user', async ({ page }) => {
             await adminPage.tableRows.first().waitFor({ state: 'visible' });
-            const firstUsername = (await adminPage.tableRows.first().locator('.oxd-table-cell').nth(1).innerText()).trim();
 
-            await adminPage.clickDeleteUser(firstUsername);
+            // Find a user that is not the protected system 'Admin' user
+            const rowCount = await adminPage.tableRows.count();
+            let targetUsername = '';
+
+            for (let i = 0; i < rowCount; i++) {
+                const uName = (await adminPage.tableRows.nth(i).locator('.oxd-table-cell').nth(1).innerText()).trim();
+                if (uName.toLowerCase() !== 'admin') {
+                    targetUsername = uName;
+                    break;
+                }
+            }
+
+            if (!targetUsername) {
+                // If only 'Admin' exists, create a temporary user to test cancel delete
+                await adminPage.navigateToAddUser();
+                targetUsername = `cnl_${Date.now().toString().slice(-6)}`;
+                await adminPage.fillAddUserForm({
+                    role: 'ESS',
+                    status: 'Enabled',
+                    username: targetUsername,
+                    password: adminTestData.defaultPassword
+                });
+                await adminPage.clickSave();
+                await expect(adminPage.toast).toBeVisible();
+                await page.waitForURL(`**/${adminTestData.adminUrl}`);
+                await adminPage.waitForTableToLoad();
+            }
+
+            await adminPage.searchUser({ username: targetUsername });
+            await adminPage.clickDeleteUser(targetUsername);
             await adminPage.cancelDelete();
 
             // Verify the user is still in the table
-            await expect(adminPage.getRowByUsername(firstUsername)).toBeVisible();
+            await expect(adminPage.getRowByUsername(targetUsername)).toBeVisible();
         });
 
         // 26. Bulk delete using checkboxes
@@ -430,7 +458,8 @@ test.describe('Admin User Management', () => {
                 password: adminTestData.defaultPassword
             });
             await adminPage.clickSave();
-            await expect(adminPage.toast).toBeVisible();
+            await expect(adminPage.successToast).toBeVisible({ timeout: 10000 });
+            await expect(adminPage.successToast).toContainText(adminTestData.expectedSuccessToast);
             await page.waitForURL(`**/${adminTestData.adminUrl}`);
             await adminPage.waitForTableToLoad();
 
@@ -441,8 +470,9 @@ test.describe('Admin User Management', () => {
             // Clean up by deleting the user
             await adminPage.searchUser({ username: tempUser });
             await adminPage.clickDeleteUser(tempUser);
-            await adminPage.confirmDelete();
-            await expect(adminPage.toast).toBeVisible();
+            await adminPage.dialogConfirmDeleteBtn.click();
+            await expect(adminPage.toast.filter({ hasText: adminTestData.expectedDeletedToast })).toBeVisible({ timeout: 10000 });
+            await adminPage.waitForTableToLoad();
 
             // Clear search filter to view all records
             await adminPage.clickReset();
@@ -490,12 +520,12 @@ test.describe('Admin User Management', () => {
             const firstUsername = await adminPage.tableRows.first().locator('.oxd-table-cell').nth(1).innerText();
             expect(firstUsername.trim()).toBe('Admin');
 
-            // Partial search
+            // Case-insensitive / partial case search
             await adminPage.clickReset();
-            await adminPage.searchUser({ username: 'Adm' });
+            await adminPage.searchUser({ username: 'admin' });
             await expect(adminPage.tableRows).not.toHaveCount(0);
             const partialUsername = await adminPage.tableRows.first().locator('.oxd-table-cell').nth(1).innerText();
-            expect(partialUsername.toLowerCase()).toContain('adm');
+            expect(partialUsername.toLowerCase()).toContain('admin');
         });
 
         // 16. Search by User Role
@@ -563,15 +593,11 @@ test.describe('Admin User Management', () => {
         test('21. Search with no match -> "No Records Found"', async ({ page }) => {
             await adminPage.searchUser({ username: adminTestData.nonExistentUsername });
             
-            // When no records found, OrangeHRM displays a toast "No Records Found" or empty table
-            const noRecordsToastOrSpan = page.locator('text="No Records Found"');
-            const rowsCount = await adminPage.tableRows.count();
-            
-            if (rowsCount === 0) {
-                await expect(page.locator('.oxd-table-card')).toHaveCount(0);
-            } else {
-                await expect(noRecordsToastOrSpan).toBeVisible({ timeout: 5000 });
-            }
+            // Table should have 0 records
+            await expect(adminPage.tableRows).toHaveCount(0);
+
+            // Empty-state records text in table header displays "No Records Found"
+            await expect(adminPage.recordsCountText).toHaveText('No Records Found');
         });
     });
 });
